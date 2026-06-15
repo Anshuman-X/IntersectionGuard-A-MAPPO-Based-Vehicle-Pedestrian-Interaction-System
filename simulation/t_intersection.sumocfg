@@ -1,0 +1,14 @@
+<configuration>
+
+    <input>
+        <net-file value="../network/t_intersection.net.xml"/>
+        <route-files value="../demand/t_routes.rou.xml"/>
+        <additional-files value="../demand/vehicle_types.add.xml"/>
+    </input>
+
+    <time>
+        <begin value="0"/>
+        <end value="100"/>
+    </time>
+
+</configuration>

@@ -1,0 +1,30 @@
+<additional>
+
+    <!-- Car -->
+    <vType id="car"
+           accel="2.0"
+           decel="4.5"
+           sigma="0.5"
+           length="5.0"
+           maxSpeed="13.9"
+           color="1,0,0"/>
+
+    <!-- Motorcycle -->
+    <vType id="motorcycle"
+           accel="3.0"
+           decel="5.0"
+           sigma="0.9"
+           length="2.0"
+           maxSpeed="16.7"
+           color="0,1,0"/>
+
+    <!-- Auto Rickshaw -->
+    <vType id="autorickshaw"
+           accel="1.8"
+           decel="4.0"
+           sigma="0.8"
+           length="3.0"
+           maxSpeed="11.0"
+           color="1,1,0"/>
+
+</additional>

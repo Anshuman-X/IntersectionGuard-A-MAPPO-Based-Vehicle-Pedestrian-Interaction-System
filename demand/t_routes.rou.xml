@@ -1,0 +1,53 @@
+<routes>
+
+    <route id="west_to_east"
+           edges="west_center center_east"/>
+
+    <route id="east_to_west"
+           edges="east_center center_west"/>
+
+    <route id="north_to_west"
+           edges="north_center center_west"/>
+
+    <!-- Cars -->
+
+    <flow id="car_flow_1"
+          route="west_to_east"
+          begin="0"
+          end="100"
+          vehsPerHour="300"
+          type="car"/>
+
+    <flow id="car_flow_2"
+          route="east_to_west"
+          begin="0"
+          end="100"
+          vehsPerHour="300"
+          type="car"/>
+
+    <!-- Motorcycles -->
+
+    <flow id="bike_flow_1"
+          route="west_to_east"
+          begin="0"
+          end="100"
+          vehsPerHour="500"
+          type="motorcycle"/>
+
+    <flow id="bike_flow_2"
+          route="north_to_west"
+          begin="0"
+          end="100"
+          vehsPerHour="400"
+          type="motorcycle"/>
+
+    <!-- Auto Rickshaws -->
+
+    <flow id="auto_flow_1"
+          route="east_to_west"
+          begin="0"
+          end="100"
+          vehsPerHour="150"
+          type="autorickshaw"/>
+
+</routes>
