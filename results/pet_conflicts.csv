@@ -1,0 +1,5 @@
+time,vehicle_id,pedestrian_id,vehicle_exit_time,pedestrian_entry_time,PET
+128.0,bike_flow_1.26,ped_5,127.0,128.0,1.0
+294.0,auto_flow_1.55,ped_39,289.0,294.0,5.0
+361.0,bike_flow_2.26,ped_54,359.0,361.0,2.0
+377.0,bike_flow_2.30,ped_43,375.0,377.0,2.0

@@ -1,0 +1,11 @@
+<connections>
+    <!-- Pedestrian crossings at the center junction -->
+    <!-- West Leg Crosswalk: crossings for pedestrians across west_center and center_west -->
+    <crossing node="center" edges="west_center center_west" priority="false" width="4.0"/>
+
+    <!-- East Leg Crosswalk: crossings for pedestrians across east_center and center_east -->
+    <crossing node="center" edges="east_center center_east" priority="false" width="4.0"/>
+
+    <!-- North Leg Crosswalk: crossings for pedestrians across north_center and center_north -->
+    <crossing node="center" edges="north_center center_north" priority="false" width="4.0"/>
+</connections>
