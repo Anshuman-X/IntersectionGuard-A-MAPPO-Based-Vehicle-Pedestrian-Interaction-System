@@ -1,0 +1,606 @@
+<routes>
+
+    <!-- Pedestrian Type Definition -->
+    <vType id="pedestrian_type" vClass="pedestrian" speedDev="0.2" length="0.5" width="0.5" minGap="0.2"/>
+
+    <person id="ped_0" type="pedestrian_type" depart="5.54">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_1" type="pedestrian_type" depart="11.14">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_2" type="pedestrian_type" depart="15.85">
+        <walk edges="north_center center_north"/>
+    </person>
+
+    <person id="ped_3" type="pedestrian_type" depart="23.41">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_4" type="pedestrian_type" depart="28.64">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_5" type="pedestrian_type" depart="30.08">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_6" type="pedestrian_type" depart="33.16">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_7" type="pedestrian_type" depart="35.33">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_8" type="pedestrian_type" depart="48.30">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_9" type="pedestrian_type" depart="49.52">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_10" type="pedestrian_type" depart="59.74">
+        <walk edges="north_center center_north"/>
+    </person>
+
+    <person id="ped_11" type="pedestrian_type" depart="65.03">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_12" type="pedestrian_type" depart="70.41">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_13" type="pedestrian_type" depart="80.40">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_14" type="pedestrian_type" depart="85.94">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_15" type="pedestrian_type" depart="87.16">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_16" type="pedestrian_type" depart="90.91">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_17" type="pedestrian_type" depart="92.64">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_18" type="pedestrian_type" depart="96.40">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_19" type="pedestrian_type" depart="100.45">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_20" type="pedestrian_type" depart="108.62">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_21" type="pedestrian_type" depart="110.42">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_22" type="pedestrian_type" depart="126.33">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_23" type="pedestrian_type" depart="149.43">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_24" type="pedestrian_type" depart="151.93">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_25" type="pedestrian_type" depart="159.42">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_26" type="pedestrian_type" depart="166.73">
+        <walk edges="north_center center_north"/>
+    </person>
+
+    <person id="ped_27" type="pedestrian_type" depart="173.83">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_28" type="pedestrian_type" depart="192.90">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_29" type="pedestrian_type" depart="195.09">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_30" type="pedestrian_type" depart="202.98">
+        <walk edges="north_center center_north"/>
+    </person>
+
+    <person id="ped_31" type="pedestrian_type" depart="204.38">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_32" type="pedestrian_type" depart="205.15">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_33" type="pedestrian_type" depart="211.61">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_34" type="pedestrian_type" depart="212.26">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_35" type="pedestrian_type" depart="213.32">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_36" type="pedestrian_type" depart="215.93">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_37" type="pedestrian_type" depart="220.36">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_38" type="pedestrian_type" depart="221.45">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_39" type="pedestrian_type" depart="224.99">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_40" type="pedestrian_type" depart="238.06">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_41" type="pedestrian_type" depart="253.29">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_42" type="pedestrian_type" depart="253.90">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_43" type="pedestrian_type" depart="255.31">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_44" type="pedestrian_type" depart="255.48">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_45" type="pedestrian_type" depart="257.15">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_46" type="pedestrian_type" depart="257.29">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_47" type="pedestrian_type" depart="258.02">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_48" type="pedestrian_type" depart="264.90">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_49" type="pedestrian_type" depart="267.69">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_50" type="pedestrian_type" depart="278.47">
+        <walk edges="north_center center_north"/>
+    </person>
+
+    <person id="ped_51" type="pedestrian_type" depart="287.03">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_52" type="pedestrian_type" depart="295.60">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_53" type="pedestrian_type" depart="299.57">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_54" type="pedestrian_type" depart="302.37">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_55" type="pedestrian_type" depart="303.10">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_56" type="pedestrian_type" depart="311.33">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_57" type="pedestrian_type" depart="323.08">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_58" type="pedestrian_type" depart="326.54">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_59" type="pedestrian_type" depart="349.77">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_60" type="pedestrian_type" depart="354.82">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_61" type="pedestrian_type" depart="362.71">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_62" type="pedestrian_type" depart="363.59">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_63" type="pedestrian_type" depart="365.63">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_64" type="pedestrian_type" depart="378.87">
+        <walk edges="north_center center_north"/>
+    </person>
+
+    <person id="ped_65" type="pedestrian_type" depart="382.43">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_66" type="pedestrian_type" depart="403.72">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_67" type="pedestrian_type" depart="403.94">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_68" type="pedestrian_type" depart="404.87">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_69" type="pedestrian_type" depart="415.85">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_70" type="pedestrian_type" depart="433.77">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_71" type="pedestrian_type" depart="438.62">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_72" type="pedestrian_type" depart="454.14">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_73" type="pedestrian_type" depart="464.26">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_74" type="pedestrian_type" depart="478.05">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_75" type="pedestrian_type" depart="482.56">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_76" type="pedestrian_type" depart="486.50">
+        <walk edges="north_center center_north"/>
+    </person>
+
+    <person id="ped_77" type="pedestrian_type" depart="505.01">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_78" type="pedestrian_type" depart="506.18">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_79" type="pedestrian_type" depart="511.74">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_80" type="pedestrian_type" depart="512.44">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_81" type="pedestrian_type" depart="514.63">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_82" type="pedestrian_type" depart="514.71">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_83" type="pedestrian_type" depart="519.97">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_84" type="pedestrian_type" depart="524.56">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_85" type="pedestrian_type" depart="526.68">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_86" type="pedestrian_type" depart="531.32">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_87" type="pedestrian_type" depart="535.49">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_88" type="pedestrian_type" depart="550.60">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_89" type="pedestrian_type" depart="557.43">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_90" type="pedestrian_type" depart="561.86">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_91" type="pedestrian_type" depart="575.52">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_92" type="pedestrian_type" depart="580.48">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_93" type="pedestrian_type" depart="580.63">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_94" type="pedestrian_type" depart="589.50">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_95" type="pedestrian_type" depart="597.94">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_96" type="pedestrian_type" depart="605.72">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_97" type="pedestrian_type" depart="608.81">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_98" type="pedestrian_type" depart="609.26">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_99" type="pedestrian_type" depart="609.80">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_100" type="pedestrian_type" depart="610.71">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_101" type="pedestrian_type" depart="617.39">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_102" type="pedestrian_type" depart="619.14">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_103" type="pedestrian_type" depart="624.39">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_104" type="pedestrian_type" depart="644.48">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_105" type="pedestrian_type" depart="649.22">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_106" type="pedestrian_type" depart="651.96">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_107" type="pedestrian_type" depart="664.74">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_108" type="pedestrian_type" depart="670.82">
+        <walk edges="north_center center_north"/>
+    </person>
+
+    <person id="ped_109" type="pedestrian_type" depart="686.08">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_110" type="pedestrian_type" depart="694.02">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_111" type="pedestrian_type" depart="694.60">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_112" type="pedestrian_type" depart="694.78">
+        <walk edges="north_center center_north"/>
+    </person>
+
+    <person id="ped_113" type="pedestrian_type" depart="700.97">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_114" type="pedestrian_type" depart="723.77">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_115" type="pedestrian_type" depart="725.57">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_116" type="pedestrian_type" depart="728.71">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_117" type="pedestrian_type" depart="738.32">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_118" type="pedestrian_type" depart="740.80">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_119" type="pedestrian_type" depart="753.51">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_120" type="pedestrian_type" depart="766.50">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_121" type="pedestrian_type" depart="767.74">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_122" type="pedestrian_type" depart="769.91">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_123" type="pedestrian_type" depart="788.79">
+        <walk edges="north_center center_north"/>
+    </person>
+
+    <person id="ped_124" type="pedestrian_type" depart="790.92">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_125" type="pedestrian_type" depart="801.50">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_126" type="pedestrian_type" depart="805.88">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_127" type="pedestrian_type" depart="818.44">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_128" type="pedestrian_type" depart="819.31">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_129" type="pedestrian_type" depart="827.64">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_130" type="pedestrian_type" depart="829.45">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_131" type="pedestrian_type" depart="832.68">
+        <walk edges="north_center center_north"/>
+    </person>
+
+    <person id="ped_132" type="pedestrian_type" depart="833.17">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_133" type="pedestrian_type" depart="834.72">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_134" type="pedestrian_type" depart="835.39">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_135" type="pedestrian_type" depart="848.11">
+        <walk edges="west_center center_north"/>
+    </person>
+
+    <person id="ped_136" type="pedestrian_type" depart="853.44">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_137" type="pedestrian_type" depart="867.43">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_138" type="pedestrian_type" depart="869.25">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_139" type="pedestrian_type" depart="883.00">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_140" type="pedestrian_type" depart="890.14">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_141" type="pedestrian_type" depart="896.05">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_142" type="pedestrian_type" depart="899.87">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_143" type="pedestrian_type" depart="906.36">
+        <walk edges="north_center center_east"/>
+    </person>
+
+    <person id="ped_144" type="pedestrian_type" depart="909.57">
+        <walk edges="east_center center_east"/>
+    </person>
+
+    <person id="ped_145" type="pedestrian_type" depart="922.67">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_146" type="pedestrian_type" depart="924.59">
+        <walk edges="east_center center_north"/>
+    </person>
+
+    <person id="ped_147" type="pedestrian_type" depart="940.10">
+        <walk edges="west_center center_west"/>
+    </person>
+
+    <person id="ped_148" type="pedestrian_type" depart="946.33">
+        <walk edges="north_center center_west"/>
+    </person>
+
+    <person id="ped_149" type="pedestrian_type" depart="947.67">
+        <walk edges="north_center center_east"/>
+    </person>
+
+</routes>

@@ -1,0 +1,29 @@
+PEDESTRIAN-VEHICLE CONFLICT ANALYSIS SUMMARY
+=============================================
+
+Total Conflicts: 1968
+
+--- Type Breakdown ---
+conflict_type
+TTC        1829
+Overlap     129
+PET          10
+
+--- Severity Breakdown ---
+severity
+Critical    800
+Moderate    748
+Low         420
+
+--- Spatial Breakdown ---
+zone
+East    367
+West    106
+
+--- TTC Metrics ---
+Average TTC: 1.27 s
+Minimum TTC: 0.01 s
+
+--- PET Metrics ---
+Average PET: 2.90 s
+Minimum PET: 1.00 s

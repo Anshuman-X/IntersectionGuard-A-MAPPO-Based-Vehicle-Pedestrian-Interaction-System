@@ -2,13 +2,13 @@
 
     <input>
         <net-file value="../network/t_intersection.net.xml"/>
-        <route-files value="../demand/t_routes.rou.xml"/>
+        <route-files value="../demand/t_routes.rou.xml,../demand/pedestrians.rou.xml"/>
         <additional-files value="../demand/vehicle_types.add.xml"/>
     </input>
 
     <time>
         <begin value="0"/>
-        <end value="100"/>
+        <end value="1000"/>
     </time>
 
 </configuration>

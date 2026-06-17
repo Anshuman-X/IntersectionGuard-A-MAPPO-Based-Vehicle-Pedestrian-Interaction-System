@@ -15,14 +15,14 @@
           route="west_to_east"
           begin="0"
           end="100"
-          vehsPerHour="300"
+          vehsPerHour="2000"
           type="car"/>
 
     <flow id="car_flow_2"
           route="east_to_west"
           begin="0"
           end="100"
-          vehsPerHour="300"
+          vehsPerHour="2000"
           type="car"/>
 
     <!-- Motorcycles -->
@@ -31,14 +31,14 @@
           route="west_to_east"
           begin="0"
           end="100"
-          vehsPerHour="500"
+          vehsPerHour="2000"
           type="motorcycle"/>
 
     <flow id="bike_flow_2"
           route="north_to_west"
           begin="0"
           end="100"
-          vehsPerHour="400"
+          vehsPerHour="2000"
           type="motorcycle"/>
 
     <!-- Auto Rickshaws -->
@@ -47,7 +47,7 @@
           route="east_to_west"
           begin="0"
           end="100"
-          vehsPerHour="150"
+          vehsPerHour="2000"
           type="autorickshaw"/>
 
 </routes>
