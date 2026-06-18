@@ -7,7 +7,8 @@
            sigma="0.5"
            length="5.0"
            maxSpeed="13.9"
-           color="1,0,0"/>
+           color="1,0,0"
+           guiShape="passenger"/>
 
     <!-- Motorcycle -->
     <vType id="motorcycle"
@@ -16,7 +17,8 @@
            sigma="0.9"
            length="2.0"
            maxSpeed="16.7"
-           color="0,1,0"/>
+           color="0,1,0"
+           guiShape="motorcycle"/>
 
     <!-- Auto Rickshaw -->
     <vType id="autorickshaw"
@@ -25,6 +27,16 @@
            sigma="0.8"
            length="3.0"
            maxSpeed="11.0"
-           color="1,1,0"/>
+           color="1,1,0"
+           guiShape="delivery"/>
+<!--Autonomous Vehicle-->
+       <vType id="av"
+       accel="2.6"
+       decel="4.5"
+       sigma="0"
+       length="5"
+       maxSpeed="13.9"
+       color="0,0,1"
+       guiShape="evehicle"/>
 
 </additional>

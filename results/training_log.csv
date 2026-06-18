@@ -1,0 +1,4 @@
+episode,total_reward,avg_reward_per_step,avg_ttc,avg_pet,total_conflicts,episode_length,critic_loss,actor_loss_west,actor_loss_east,actor_loss_north,entropy_west,entropy_east,entropy_north,duration_s
+1,-3769.8057,-7.5396,2.6828,2.444,1107,500,20131.496423,0.051461,0.051461,0.051461,1.3793,1.3793,1.3793,69.55
+2,-3916.3969,-7.8328,2.6773,2.5,1126,500,13584.841504,0.024314,0.024314,0.024314,1.3711,1.3711,1.3711,126.41
+3,-3482.1347,-6.9643,2.6889,2.6,1063,500,9779.542725,0.000698,0.000698,0.000698,1.3568,1.3568,1.3568,110.48
