@@ -12,10 +12,10 @@ def init_weights(module: nn.Module, gain: float = 1.0):
 
 class Actor(nn.Module):
     """
-    Actor network mapping a local 5D observation vector to action logits
+    Actor network mapping a local 9D observation vector to action logits
     over 4 actions. Shared across all 3 agents.
     """
-    def __init__(self, obs_dim: int = 5, action_dim: int = 4, hidden_dim: int = 64):
+    def __init__(self, obs_dim: int = 9, action_dim: int = 4, hidden_dim: int = 64):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(obs_dim, hidden_dim),
@@ -55,10 +55,10 @@ class Actor(nn.Module):
 
 class CentralizedCritic(nn.Module):
     """
-    Centralized Critic network mapping the 15D global state vector (concatenated
+    Centralized Critic network mapping the 27D global state vector (concatenated
     observations of all 3 agents) to a scalar value estimate V(s).
     """
-    def __init__(self, state_dim: int = 15, hidden_dim: int = 128):
+    def __init__(self, state_dim: int = 27, hidden_dim: int = 128):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(state_dim, hidden_dim),

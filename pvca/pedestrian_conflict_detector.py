@@ -3,6 +3,8 @@ import sys
 import math
 import csv
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 # Ensure SUMO tools path is set up
@@ -16,11 +18,11 @@ import traci
 class PedestrianConflictDetector:
     """
     A modular class for analyzing vehicle-pedestrian conflicts at intersections.
-    Designed for easy integration as a helper class in future MAPPO reinforcement learning environments.
+    Detects TTC, Overlap, and PET conflicts, categorizing them by zone and severity.
     """
     def __init__(self, sumocfg_path, csv_output_path="results/pedestrian_conflicts.csv", 
                  junction_center=(100.0, 0.0), junction_radius=30.0, 
-                 conflict_radius=20.0, ttc_threshold=3.0):
+                 conflict_radius=20.0, ttc_threshold=3.0, pet_threshold=5.0):
         
         self.sumocfg_path = sumocfg_path
         self.csv_output_path = csv_output_path
@@ -28,9 +30,28 @@ class PedestrianConflictDetector:
         self.junction_radius = junction_radius
         self.conflict_radius = conflict_radius
         self.ttc_threshold = ttc_threshold
+        self.pet_threshold = pet_threshold
         
-        # State metrics
+        # Conflict zone configurations matching state.py and pet.py
+        self.conflict_zones = {
+            "West":  {"x_min": 92.8,  "x_max": 96.8,  "y_min": -3.5, "y_max": 3.5},
+            "East":  {"x_min": 103.2, "x_max": 107.2, "y_min": -3.5, "y_max": 3.5},
+            "North": {"x_min": 96.5,  "x_max": 103.5, "y_min":  3.2, "y_max": 7.2},
+        }
+        
+        # Tracking dictionaries for PET
+        self.occupied_by_veh = {zone: set() for zone in self.conflict_zones}
+        self.occupied_by_ped = {zone: set() for zone in self.conflict_zones}
+        self.last_vehicle_exit = {zone: None for zone in self.conflict_zones}
+        
         self.conflict_records = []
+        
+    def get_occupied_zone(self, x, y):
+        """Return the name of the conflict zone if coordinates are inside, else 'General (None)'."""
+        for zone_name, bbox in self.conflict_zones.items():
+            if bbox["x_min"] <= x <= bbox["x_max"] and bbox["y_min"] <= y <= bbox["y_max"]:
+                return zone_name
+        return "General (None)"
         
     def start_simulation(self, use_gui=False):
         """Initialize and start the TraCI SUMO simulation."""
@@ -39,17 +60,21 @@ class PedestrianConflictDetector:
         traci.start(sumo_cmd)
         print(f"SUMO ({sumo_binary}) started successfully.")
         
-        # Initialize the CSV file with the required headers
+        # Initialize the CSV file with the required headers for the analyzer/visualizer
         os.makedirs(os.path.dirname(self.csv_output_path), exist_ok=True)
         with open(self.csv_output_path, "w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow([
                 "time",
-                "vehicle_id",
-                "pedestrian_id",
+                "conflict_type",
+                "severity",
+                "zone",
+                "value",
                 "distance",
                 "vehicle_speed",
-                "ttc"
+                "pedestrian_speed",
+                "vehicle_id",
+                "pedestrian_id"
             ])
             
     def is_near_crosswalks(self, position):
@@ -57,67 +82,163 @@ class PedestrianConflictDetector:
         return math.dist(position, self.junction_center) <= self.junction_radius
         
     def calculate_ttc(self, distance, speed):
-        """
-        Compute Time-to-Collision (TTC) in seconds.
-        TTC = Distance / Vehicle Speed
-        """
-        if speed <= 0.05: # Threshold to avoid division by zero or extremely high TTC values
+        """Compute Time-to-Collision (TTC) in seconds."""
+        if speed <= 0.05:
             return float('inf')
         return distance / speed
 
     def run_simulation_step(self):
-        """Execute a single simulation step and detect vehicle-pedestrian conflicts."""
+        """Execute a single simulation step and detect vehicle-pedestrian conflicts (TTC, Overlap, PET)."""
         traci.simulationStep()
         sim_time = traci.simulation.getTime()
         
         vehicles = traci.vehicle.getIDList()
         pedestrians = traci.person.getIDList()
         
-        # Filter vehicles and pedestrians near the crosswalks to reduce computational overhead
+        # 1. Track current zone occupancies for PET
+        current_veh_occupancy = {zone: set() for zone in self.conflict_zones}
+        current_ped_occupancy = {zone: set() for zone in self.conflict_zones}
+        
         near_vehicles = []
         vehicle_states = {}
         for v in vehicles:
-            pos = traci.vehicle.getPosition(v)
-            if self.is_near_crosswalks(pos):
-                speed = traci.vehicle.getSpeed(v)
-                near_vehicles.append(v)
-                vehicle_states[v] = {"pos": pos, "speed": speed}
+            try:
+                pos = traci.vehicle.getPosition(v)
+                zone = self.get_occupied_zone(pos[0], pos[1])
+                if zone != "General (None)":
+                    current_veh_occupancy[zone].add(v)
+                
+                if self.is_near_crosswalks(pos):
+                    speed = traci.vehicle.getSpeed(v)
+                    near_vehicles.append(v)
+                    vehicle_states[v] = {"pos": pos, "speed": speed}
+            except traci.exceptions.TraCIException:
+                continue
                 
         near_pedestrians = []
         pedestrian_states = {}
         for p in pedestrians:
-            pos = traci.person.getPosition(p)
-            if self.is_near_crosswalks(pos):
-                near_pedestrians.append(p)
-                pedestrian_states[p] = {"pos": pos}
+            try:
+                pos = traci.person.getPosition(p)
+                zone = self.get_occupied_zone(pos[0], pos[1])
+                if zone != "General (None)":
+                    current_ped_occupancy[zone].add(p)
                 
-        # Analyze pairs of near-intersection actors
+                if self.is_near_crosswalks(pos):
+                    speed = traci.person.getSpeed(p)
+                    near_pedestrians.append(p)
+                    pedestrian_states[p] = {"pos": pos, "speed": speed}
+            except traci.exceptions.TraCIException:
+                continue
+                
         step_conflicts = []
+        
+        # 2. Detect TTC and Overlap conflicts
         for v in near_vehicles:
             v_pos = vehicle_states[v]["pos"]
             v_speed = vehicle_states[v]["speed"]
             
             for p in near_pedestrians:
                 p_pos = pedestrian_states[p]["pos"]
+                p_speed = pedestrian_states[p]["speed"]
                 
-                # Spatial distance check
                 distance = math.dist(v_pos, p_pos)
                 if distance <= self.conflict_radius:
-                    # Calculate TTC
-                    ttc = self.calculate_ttc(distance, v_speed)
+                    zone = self.get_occupied_zone(p_pos[0], p_pos[1])
                     
-                    # Register conflict if below the safety threshold
-                    if ttc <= self.ttc_threshold:
+                    # Check for Overlap conflict
+                    if distance < 1.5:
                         record = [
                             round(sim_time, 2),
-                            v,
-                            p,
+                            "Overlap",
+                            "Critical",
+                            zone,
+                            0.0,
                             round(distance, 2),
                             round(v_speed, 2),
-                            round(ttc, 2)
+                            round(p_speed, 2),
+                            v,
+                            p
                         ]
                         step_conflicts.append(record)
                         self.conflict_records.append(record)
+                    else:
+                        # Check for TTC conflict
+                        ttc = self.calculate_ttc(distance, v_speed)
+                        if ttc <= self.ttc_threshold:
+                            severity = "Low"
+                            if ttc < 1.0:
+                                severity = "Critical"
+                            elif ttc < 2.0:
+                                severity = "Moderate"
+                                
+                            record = [
+                                round(sim_time, 2),
+                                "TTC",
+                                severity,
+                                zone,
+                                round(ttc, 2),
+                                round(distance, 2),
+                                round(v_speed, 2),
+                                round(p_speed, 2),
+                                v,
+                                p
+                            ]
+                            step_conflicts.append(record)
+                            self.conflict_records.append(record)
+                            
+        # 3. Detect PET conflicts
+        for zone in self.conflict_zones:
+            # Detect when a vehicle exits the zone
+            for v in list(self.occupied_by_veh[zone]):
+                if v not in current_veh_occupancy[zone]:
+                    # Vehicle exited in this step
+                    self.last_vehicle_exit[zone] = (v, sim_time)
+                    
+            # Detect when a pedestrian enters the zone
+            for p in current_ped_occupancy[zone]:
+                if p not in self.occupied_by_ped[zone]:
+                    # Pedestrian entered in this step
+                    if self.last_vehicle_exit[zone] is not None:
+                        v_id, exit_time = self.last_vehicle_exit[zone]
+                        pet = sim_time - exit_time
+                        
+                        if 0.0 < pet <= self.pet_threshold:
+                            # Log PET conflict
+                            severity = "Low"
+                            if pet < 1.5:
+                                severity = "Critical"
+                            elif pet < 3.0:
+                                severity = "Moderate"
+                                
+                            try:
+                                v_speed = traci.vehicle.getSpeed(v_id) if v_id in vehicles else 0.0
+                                p_speed = traci.person.getSpeed(p) if p in pedestrians else 0.0
+                            except traci.exceptions.TraCIException:
+                                v_speed = 0.0
+                                p_speed = 0.0
+                                
+                            record = [
+                                round(sim_time, 2),
+                                "PET",
+                                severity,
+                                zone,
+                                round(pet, 2),
+                                0.0, # distance not directly defined at entry event
+                                round(v_speed, 2),
+                                round(p_speed, 2),
+                                v_id,
+                                p
+                            ]
+                            step_conflicts.append(record)
+                            self.conflict_records.append(record)
+                            
+                            # Consume the exit record
+                            self.last_vehicle_exit[zone] = None
+                            
+            # Update histories for next step
+            self.occupied_by_veh[zone] = current_veh_occupancy[zone].copy()
+            self.occupied_by_ped[zone] = current_ped_occupancy[zone].copy()
                         
         # Append conflicts to CSV file in real time
         if step_conflicts:
@@ -134,7 +255,7 @@ class PedestrianConflictDetector:
             self.run_simulation_step()
             
         traci.close()
-        print(f"Simulation finished. Raw conflict data saved to {self.csv_output_path}")
+        print(f"Simulation finished. Calibrated conflict data saved to {self.csv_output_path}")
 
     def generate_statistics(self):
         """Analyze the conflict dataset and generate aggregate summary statistics."""
@@ -153,11 +274,16 @@ class PedestrianConflictDetector:
                 "max_ttc": float('nan')
             }
             
+        ttc_df = df[df["conflict_type"] == "TTC"]
+        avg_ttc = round(ttc_df["value"].mean(), 2) if not ttc_df.empty else float('nan')
+        min_ttc = round(ttc_df["value"].min(), 2) if not ttc_df.empty else float('nan')
+        max_ttc = round(ttc_df["value"].max(), 2) if not ttc_df.empty else float('nan')
+        
         stats = {
             "total_conflicts": len(df),
-            "avg_ttc": round(df["ttc"].mean(), 2),
-            "min_ttc": round(df["ttc"].min(), 2),
-            "max_ttc": round(df["ttc"].max(), 2)
+            "avg_ttc": avg_ttc,
+            "min_ttc": min_ttc,
+            "max_ttc": max_ttc
         }
         
         print("\n" + "="*40)
@@ -182,8 +308,13 @@ class PedestrianConflictDetector:
             print("No data to plot.")
             return
             
+        ttc_df = df[df["conflict_type"] == "TTC"]
+        if ttc_df.empty:
+            print("No TTC conflict records to plot.")
+            return
+            
         plt.figure(figsize=(8, 5))
-        plt.hist(df["ttc"], bins=20, range=(0, self.ttc_threshold), color="#d9534f", edgecolor="black", alpha=0.85, rwidth=0.9)
+        plt.hist(ttc_df["value"], bins=20, range=(0, self.ttc_threshold), color="#d9534f", edgecolor="black", alpha=0.85, rwidth=0.9)
         plt.title("Distribution of Vehicle-Pedestrian Time-to-Collision (TTC)")
         plt.xlabel("TTC (seconds)")
         plt.ylabel("Frequency (Steps)")

@@ -17,9 +17,9 @@ class MAPPO:
     """
     def __init__(
         self,
-        obs_dim: int = 5,
+        obs_dim: int = 9,
         action_dim: int = 4,
-        state_dim: int = 15,
+        state_dim: int = 27,
         n_agents: int = 3,
         lr_actor: float = 3e-4,
         lr_critic: float = 1e-3,

@@ -1,70 +1,184 @@
 <routes>
 
-    <!-- Routes -->
+    <!-- Calibrated Routes -->
+    <route id="west_to_east" edges="west_center center_east"/>
+    <route id="east_to_west" edges="east_center center_west"/>
+    <route id="north_to_west" edges="north_center center_west"/>
 
-    <route id="west_to_east"
-           edges="west_center center_east"/>
-
-    <route id="east_to_west"
-           edges="east_center center_west"/>
-
-    <route id="north_to_west"
-           edges="north_center center_west"/>
-
-    <!-- Cars -->
-
-    <flow id="car_flow_1"
+    <!-- Auto flows -->
+    <flow id="auto_flow_we"
           route="west_to_east"
           begin="0"
           end="1000"
-          vehsPerHour="250"
-          type="car"/>
+          vehsPerHour="24"
+          type="auto"/>
 
-    <flow id="car_flow_2"
+    <flow id="auto_flow_ew"
           route="east_to_west"
           begin="0"
           end="1000"
-          vehsPerHour="250"
-          type="car"/>
+          vehsPerHour="24"
+          type="auto"/>
 
-    <!-- Motorcycles -->
-
-    <flow id="bike_flow_1"
-          route="west_to_east"
-          begin="0"
-          end="1000"
-          vehsPerHour="150"
-          type="motorcycle"/>
-
-    <flow id="bike_flow_2"
+    <flow id="auto_flow_nw"
           route="north_to_west"
           begin="0"
           end="1000"
-          vehsPerHour="150"
-          type="motorcycle"/>
+          vehsPerHour="12"
+          type="auto"/>
 
-    <!-- Auto Rickshaws -->
-
-    <flow id="auto_flow_1"
-          route="east_to_west"
-          begin="0"
-          end="1000"
-          vehsPerHour="100"
-          type="autorickshaw"/>
-
-    <!-- Autonomous Vehicles -->
-
-    <flow id="av_flow_1"
+    <!-- Bicycle flows -->
+    <flow id="bicycle_flow_we"
           route="west_to_east"
           begin="0"
           end="1000"
-          vehsPerHour="120"
-          type="av"/>
+          vehsPerHour="1"
+          type="bicycle"/>
 
-<flow id="av_flow_2"
-      route="east_to_west"
-      begin="0"
-      end="100"
-      vehsPerHour="120"
-      type="av"/>
+    <flow id="bicycle_flow_ew"
+          route="east_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="bicycle"/>
+
+    <flow id="bicycle_flow_nw"
+          route="north_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="bicycle"/>
+
+    <!-- Bus flows -->
+    <flow id="bus_flow_we"
+          route="west_to_east"
+          begin="0"
+          end="1000"
+          vehsPerHour="3"
+          type="bus"/>
+
+    <flow id="bus_flow_ew"
+          route="east_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="3"
+          type="bus"/>
+
+    <flow id="bus_flow_nw"
+          route="north_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="bus"/>
+
+    <!-- Car flows -->
+    <flow id="car_flow_we"
+          route="west_to_east"
+          begin="0"
+          end="1000"
+          vehsPerHour="23"
+          type="car"/>
+
+    <flow id="car_flow_ew"
+          route="east_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="23"
+          type="car"/>
+
+    <flow id="car_flow_nw"
+          route="north_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="11"
+          type="car"/>
+
+    <!-- Cart flows -->
+    <flow id="cart_flow_we"
+          route="west_to_east"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="cart"/>
+
+    <flow id="cart_flow_ew"
+          route="east_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="cart"/>
+
+    <flow id="cart_flow_nw"
+          route="north_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="cart"/>
+
+    <!-- Motorcycle flows -->
+    <flow id="motorcycle_flow_we"
+          route="west_to_east"
+          begin="0"
+          end="1000"
+          vehsPerHour="93"
+          type="motorcycle"/>
+
+    <flow id="motorcycle_flow_ew"
+          route="east_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="93"
+          type="motorcycle"/>
+
+    <flow id="motorcycle_flow_nw"
+          route="north_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="46"
+          type="motorcycle"/>
+
+    <!-- Other flows -->
+    <flow id="other_flow_we"
+          route="west_to_east"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="other"/>
+
+    <flow id="other_flow_ew"
+          route="east_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="other"/>
+
+    <flow id="other_flow_nw"
+          route="north_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="other"/>
+
+    <!-- Truck flows -->
+    <flow id="truck_flow_we"
+          route="west_to_east"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="truck"/>
+
+    <flow id="truck_flow_ew"
+          route="east_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="truck"/>
+
+    <flow id="truck_flow_nw"
+          route="north_to_west"
+          begin="0"
+          end="1000"
+          vehsPerHour="1"
+          type="truck"/>
+
 </routes>

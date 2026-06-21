@@ -2,165 +2,137 @@
 rl/reward.py
 ============
 Reward calculator for cooperative MAPPO agents at an unsignalized T-intersection.
-
-Reward Philosophy
------------------
-The reward function is the "objective" that MAPPO learns to maximize. Every term
-must have a clear physical meaning tied to traffic safety:
-
-    reward = efficiency_reward
-           + pet_reward
-           - pedestrian_conflict_penalty
-           - vehicle_conflict_penalty
-           - ttc_penalty
-
-Term-by-Term Explanation
--------------------------
-
-1. efficiency_reward  = w_speed × avg_speed
-   - Prevents the agent from learning the trivial policy of "stop all vehicles forever."
-   - Higher average speed (within safe bounds) means less congestion and better throughput.
-   - Weight w_speed = 0.2 is intentionally small so safety terms dominate.
-
-2. pet_reward  = w_pet × avg_pet
-   - PET (Post-Encroachment Time) is the temporal gap between a vehicle leaving a
-     conflict zone and a pedestrian entering the same zone.
-   - Larger PET → safer temporal separation → positive reward signal.
-   - When no PET event occurs, avg_pet defaults to PET_THRESHOLD (a safe value),
-     so the agent is rewarded for maintaining separation even when no conflict is active.
-   - Weight w_pet = 1.5 (moderate positive).
-
-3. pedestrian_conflict_penalty  = -w_ped_conflict × conflict_count
-   - Penalises every active vehicle-pedestrian TTC conflict detected this step.
-   - Heaviest weight (10.0) because pedestrian safety is the primary objective.
-   - Directly incentivises Actions 2 and 3 (Stop / Prioritize Pedestrians).
-
-4. vehicle_conflict_penalty  = -w_veh_conflict × vehicle_conflicts
-   - Penalises vehicle-vehicle near-misses at the intersection.
-   - Lighter weight (2.0) than pedestrian penalty — vehicles can negotiate at
-     lower risk than vehicle-pedestrian encounters.
-
-5. ttc_penalty  = -w_ttc × (1 / avg_ttc)  when avg_ttc < ttc_safe_limit
-   - This is an inverse-TTC penalty: as TTC → 0, the penalty grows very steeply.
-   - Only applied when TTC falls below the safety threshold (3 seconds),
-     so normal free-flow speeds are not penalised.
-   - Formula: 1/TTC grows from 0.33 (at TTC=3s) to 10 (at TTC=0.1s).
-
-Cooperative Reward
-------------------
-calculate_cooperative_reward() averages all agent local rewards into one team reward.
-All agents receive this same value, which is the MAPPO paradigm:
-  - MAPPO trains a CENTRALISED CRITIC on the joint reward.
-  - Each DECENTRALISED ACTOR acts on its own local observation.
-  - Shared reward encourages cooperative behaviour rather than greedy local optima.
-
-Paper Reference
----------------
-Reward shaping following: Yu et al. (2022) "The Surprising Effectiveness of MAPPO"
-TTC-based safety penalty following: Songchitruksa & Tarko (2006) PVCA framework.
+Calibrated and improved to balance safety and throughput.
 """
-
 
 class RewardCalculator:
     """
     Computes per-step rewards for cooperative MAPPO agents.
-    Balances safety (minimising conflicts, maximising PET/TTC) and
-    efficiency (maximising throughput).
+    Balances safety (minimising conflicts, emergency braking, collisions, PET/TTC) and
+    efficiency (minimising waiting times, unnecessary stopping, and maximising throughput).
     """
 
     def __init__(
         self,
-        w_speed: float        = 0.2,
-        w_pet: float          = 1.5,
-        w_ped_conflict: float = 20.0,
-        w_veh_conflict: float = 5.0,
-        w_ttc_penalty: float  = 3.0,
+        w_speed: float        = 1.0,    # Weight for throughput/speed
+        w_pet_safe: float     = 0.5,    # Weight for maintaining safe PET
+        w_pet_unsafe: float   = 10.0,   # Weight for penalising unsafe PET
+        w_ttc_safe: float     = 0.5,    # Weight for maintaining safe TTC
+        w_ttc_unsafe: float   = 5.0,    # Weight for penalising unsafe TTC
+        w_ped_wait: float     = 1.0,    # Weight for pedestrian waiting time
+        w_veh_wait: float     = 0.5,    # Weight for vehicle waiting time
+        w_emergency_brake: float = 15.0,# Weight for emergency braking
+        w_stopped_unnecessarily: float = 10.0, # Weight for unnecessary stopping
+        w_veh_conflict: float = 5.0,    # Weight for vehicle-vehicle conflicts
+        w_collision: float    = 250.0,  # Weight for collisions
         ttc_safe_limit: float = 3.0,
         pet_threshold: float  = 5.0,
     ):
-        self.w_speed         = w_speed
-        self.w_pet           = w_pet
-        self.w_ped_conflict  = w_ped_conflict
-        self.w_veh_conflict  = w_veh_conflict
-        self.w_ttc_penalty   = w_ttc_penalty
-        self.ttc_safe_limit  = ttc_safe_limit
-        self.pet_threshold   = pet_threshold
+        self.w_speed = w_speed
+        self.w_pet_safe = w_pet_safe
+        self.w_pet_unsafe = w_pet_unsafe
+        self.w_ttc_safe = w_ttc_safe
+        self.w_ttc_unsafe = w_ttc_unsafe
+        self.w_ped_wait = w_ped_wait
+        self.w_veh_wait = w_veh_wait
+        self.w_emergency_brake = w_emergency_brake
+        self.w_stopped_unnecessarily = w_stopped_unnecessarily
+        self.w_veh_conflict = w_veh_conflict
+        self.w_collision = w_collision
+        self.ttc_safe_limit = ttc_safe_limit
+        self.pet_threshold = pet_threshold
 
     def calculate_reward(
         self,
         agent_id: str,
         observation: list,
+        agent_vehicles: list,
+        agent_pedestrians: list,
+        collisions: int = 0,
+        emergency_brakes: int = 0,
         vehicle_conflicts: int = 0,
-        avg_pet: float | None  = None,
+        veh_waiting_time: float = 0.0,
+        stopped_unnecessarily: int = 0,
     ) -> float:
         """
-        Calculate local reward for one agent based on its 5-feature observation.
+        Calculate local reward for one agent based on its 9-feature observation and safety metrics.
 
         Observation layout (must match state.py):
-            [0] veh_count      – number of vehicles on this approach
-            [1] ped_count      – pedestrians in the crossing zone
-            [2] avg_ttc        – average TTC across active conflicts (s)
-            [3] avg_speed      – average vehicle speed (m/s)
-            [4] conflict_count – active TTC-based conflict count this step
-
-        Parameters
-        ----------
-        agent_id         : Identifier (for future per-agent weight tuning).
-        observation      : 5-element list/array from StateExtractor.
-        vehicle_conflicts: Global vehicle-vehicle conflicts at junction this step.
-        avg_pet          : Average PET for this agent's zone this step (seconds).
-                           If None, defaults to pet_threshold (no conflict = safe).
+            [0] avg_speed        - average speed of vehicles (m/s)
+            [1] avg_pos          - average distance to junction (m)
+            [2] avg_direction    - average heading angle
+            [3] density          - density of vehicles
+            [4] avg_waiting_time - average pedestrian waiting time (s)
+            [5] step_pet         - step PET (s)
+            [6] avg_ttc          - average vehicle-pedestrian TTC (s)
+            [7] gap_acceptance   - calibrated gap acceptance (s)
+            [8] crossing_status  - crossing status (1.0 or 0.0)
         """
-        veh_count        = observation[0]
-        ped_count        = observation[1]   # noqa: F841 – kept for future penalty term
-        avg_ttc          = observation[2]
-        avg_speed        = observation[3]
-        ped_conflict_cnt = observation[4]
+        avg_speed        = observation[0]
+        density          = observation[3]
+        ped_waiting_time = observation[4]
+        step_pet         = observation[5]
+        avg_ttc          = observation[6]
+        crossing_status  = observation[8]
 
-        # Use safe default PET when no event was detected this step
-        if avg_pet is None:
-            avg_pet = self.pet_threshold
+        # ── 1. Throughput & Efficiency Reward ──────────────────────────────────
+        # Reward active vehicle throughput (speed * density proxy)
+        throughput_reward = self.w_speed * (avg_speed * density * 10.0)
 
-        # ── 1. Efficiency reward ─────────────────────────────────────────────
-        efficiency_reward = 0.0
-        if veh_count > 0:
-            efficiency_reward = self.w_speed * avg_speed
+        # ── 2. PET Safety Terms ────────────────────────────────────────────────
+        pet_reward = 0.0
+        if step_pet < self.pet_threshold:
+            # Unsafe PET: apply penalty proportional to how close we are to collision
+            pet_reward = -self.w_pet_unsafe * (self.pet_threshold - step_pet)
+        else:
+            # Safe PET: reward keeping safe temporal gap
+            pet_reward = self.w_pet_safe * step_pet
 
-        # ── 2. PET reward ────────────────────────────────────────────────────
-        pet_reward = self.w_pet * avg_pet
-
-        # ── 3. Pedestrian conflict penalty ───────────────────────────────────
-        pedestrian_conflict_penalty = -self.w_ped_conflict * ped_conflict_cnt
-
-        # ── 4. Vehicle-vehicle conflict penalty ──────────────────────────────
-        vehicle_conflict_penalty = -self.w_veh_conflict * vehicle_conflicts
-
-        # ── 5. Low-TTC inverse penalty ───────────────────────────────────────
-        ttc_penalty = 0.0
+        # ── 3. TTC Safety Terms ────────────────────────────────────────────────
+        ttc_reward = 0.0
         if avg_ttc < self.ttc_safe_limit:
-            # max(..., 0.1) prevents division-by-zero when TTC is near zero
-            ttc_penalty = -self.w_ttc_penalty * (1.0 / max(avg_ttc, 0.1))
+            # Unsafe TTC: steep inverse penalty as TTC -> 0
+            ttc_reward = -self.w_ttc_unsafe * (1.0 / max(avg_ttc, 0.1))
+        else:
+            # Safe TTC: reward maintaining headway
+            ttc_reward = self.w_ttc_safe * avg_ttc
 
+        # ── 4. Waiting Time Penalties ──────────────────────────────────────────
+        # Penalise pedestrian delay
+        ped_delay_penalty = -self.w_ped_wait * ped_waiting_time
+        # Penalise vehicle delay
+        veh_delay_penalty = -self.w_veh_wait * veh_waiting_time
+
+        # ── 5. Operational Safety Penalties ────────────────────────────────────
+        # Penalise emergency deceleration (emergency braking)
+        brake_penalty = -self.w_emergency_brake * emergency_brakes
+        # Penalise vehicle conflicts
+        conflict_penalty = -self.w_veh_conflict * vehicle_conflicts
+        # Penalise collisions heavily
+        collision_penalty = -self.w_collision * collisions
+
+        # ── 6. Operational Efficiency Penalties ────────────────────────────────
+        # Penalise stopping vehicles when no pedestrians are crossing
+        unnecessary_stopping_penalty = -self.w_stopped_unnecessarily * stopped_unnecessarily
+
+        # Sum terms
         local_reward = (
-            efficiency_reward
+            throughput_reward
             + pet_reward
-            + pedestrian_conflict_penalty
-            + vehicle_conflict_penalty
-            + ttc_penalty
+            + ttc_reward
+            + ped_delay_penalty
+            + veh_delay_penalty
+            + brake_penalty
+            + conflict_penalty
+            + collision_penalty
+            + unnecessary_stopping_penalty
         )
         return local_reward
 
     def calculate_cooperative_reward(self, rewards_dict: dict) -> float:
         """
-        Formulate a shared cooperative reward for MAPPO.
-
-        All agents receive the average team reward so that no single agent is
-        incentivised to optimise its local approach at the expense of another.
-        This is the key design principle of MAPPO cooperative training.
-
-        Returns
-        -------
-        float : Mean of all agent local rewards.
+        Formulate a shared cooperative team reward for MAPPO.
+        All agents receive the average team reward to encourage coordination.
         """
         if not rewards_dict:
             return 0.0

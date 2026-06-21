@@ -1,42 +1,99 @@
 <additional>
 
-    <!-- Car -->
+    <!-- Calibrated auto -->
+    <vType id="auto"
+           accel="1.8"
+           decel="4.0"
+           sigma="0.8"
+           length="3.0"
+           maxSpeed="11.94"
+           speedFactor="0.20"
+           speedDev="0.1"
+           color="0.8,0.8,0.2"
+           guiShape="delivery"/>
+
+    <!-- Calibrated bicycle -->
+    <vType id="bicycle"
+           accel="0.8"
+           decel="1.5"
+           sigma="0.9"
+           length="1.8"
+           maxSpeed="6.72"
+           speedFactor="0.20"
+           speedDev="0.1"
+           color="0.3,0.7,0.9"
+           guiShape="bicycle"/>
+
+    <!-- Calibrated bus -->
+    <vType id="bus"
+           accel="1.2"
+           decel="3.5"
+           sigma="0.6"
+           length="12.0"
+           maxSpeed="12.20"
+           speedFactor="0.20"
+           speedDev="0.1"
+           color="0.8,0.5,0.2"
+           guiShape="bus"/>
+
+    <!-- Calibrated car -->
     <vType id="car"
            accel="2.0"
            decel="4.5"
            sigma="0.5"
            length="5.0"
-           maxSpeed="13.9"
-           color="1,0,0"
+           maxSpeed="22.00"
+           speedFactor="0.20"
+           speedDev="0.1"
+           color="0.8,0.2,0.2"
            guiShape="passenger"/>
 
-    <!-- Motorcycle -->
+    <!-- Calibrated cart -->
+    <vType id="cart"
+           accel="0.5"
+           decel="1.0"
+           sigma="0.9"
+           length="2.5"
+           maxSpeed="4.17"
+           speedFactor="0.35"
+           speedDev="0.1"
+           color="0.6,0.4,0.2"
+           guiShape="delivery"/>
+
+    <!-- Calibrated motorcycle -->
     <vType id="motorcycle"
            accel="3.0"
            decel="5.0"
            sigma="0.9"
            length="2.0"
-           maxSpeed="16.7"
-           color="0,1,0"
+           maxSpeed="17.89"
+           speedFactor="0.20"
+           speedDev="0.1"
+           color="0.2,0.8,0.2"
            guiShape="motorcycle"/>
 
-    <!-- Auto Rickshaw -->
-    <vType id="autorickshaw"
-           accel="1.8"
-           decel="4.0"
-           sigma="0.8"
-           length="3.0"
-           maxSpeed="11.0"
-           color="1,1,0"
-           guiShape="delivery"/>
-<!--Autonomous Vehicle-->
-       <vType id="av"
-       accel="2.6"
-       decel="4.5"
-       sigma="0"
-       length="5"
-       maxSpeed="13.9"
-       color="0,0,1"
-       guiShape="evehicle"/>
+    <!-- Calibrated other -->
+    <vType id="other"
+           accel="1.5"
+           decel="3.5"
+           sigma="0.7"
+           length="4.5"
+           maxSpeed="4.99"
+           speedFactor="0.20"
+           speedDev="0.1"
+           color="0.7,0.3,0.7"
+           guiShape="passenger"/>
+
+    <!-- Calibrated truck -->
+    <vType id="truck"
+           accel="1.0"
+           decel="3.0"
+           sigma="0.6"
+           length="10.0"
+           maxSpeed="2.55"
+           speedFactor="0.20"
+           speedDev="0.1"
+           color="0.5,0.5,0.5"
+           guiShape="truck"/>
 
 </additional>

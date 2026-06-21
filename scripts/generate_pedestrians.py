@@ -1,10 +1,36 @@
+import os
 import random
+import pandas as pd
 
-def generate_pedestrian_demand(file_path, total_time=1000, num_pedestrians=150, seed=42):
+def generate_pedestrian_demand(file_path, total_time=1000, seed=42):
     random.seed(seed)
     
+    # 1. Read calibration data from workspace data folder or D drive fallback
+    calib_paths = [
+        "data/sumo_pedestrian_calibration.csv",
+        r"D:\RESEARCH INTERNSHIP NITT\DATA SETS\cleaned_data\TRAINING_DATA\sumo_pedestrian_calibration.csv"
+    ]
+    
+    crossing_rate = 80.98
+    avg_gap_acceptance = 3.62
+    avg_waiting_time = 0.69
+    
+    for path in calib_paths:
+        if os.path.exists(path):
+            try:
+                calib_df = pd.read_csv(path)
+                crossing_rate = float(calib_df.loc[0, "crossing_rate"])
+                avg_gap_acceptance = float(calib_df.loc[0, "avg_gap_acceptance"])
+                avg_waiting_time = float(calib_df.loc[0, "avg_waiting_time"])
+                print(f"Loaded pedestrian calibration from {path}: crossing_rate={crossing_rate:.2f}, avg_gap_acceptance={avg_gap_acceptance:.2f}")
+                break
+            except Exception as e:
+                print(f"Error reading {path}: {e}")
+                
+    # Calculate calibrated number of pedestrians
+    num_pedestrians = int(crossing_rate * (total_time / 60.0))
+    
     # Define pedestrian OD paths that require crossing the junction
-    # Path name -> sequence of edges
     paths = [
         # Crosses West leg
         ("west_to_west", ["west_center", "center_west"]),
@@ -22,16 +48,14 @@ def generate_pedestrian_demand(file_path, total_time=1000, num_pedestrians=150, 
         ("north_to_east", ["north_center", "center_east"]),
     ]
     
-    # Generate departure times (evenly distributed with some randomness)
+    # Generate departure times
     depart_times = sorted([random.uniform(5, total_time - 50) for _ in range(num_pedestrians)])
     
     with open(file_path, "w") as f:
         f.write("<routes>\n\n")
-        
-        # Define a pedestrian type with realistic speed and dimensions
-        # Average walking speed is 1.34 m/s (standard deviation ~0.26 m/s)
         f.write("    <!-- Pedestrian Type Definition -->\n")
-        f.write('    <vType id="pedestrian_type" vClass="pedestrian" speedDev="0.2" length="0.5" width="0.5" minGap="0.2"/>\n\n')
+        # Calibrate crossing decision gap acceptance via jmCrossingGap
+        f.write(f'    <vType id="pedestrian_type" vClass="pedestrian" speedDev="0.2" length="0.5" width="0.5" minGap="0.2" jmCrossingGap="{avg_gap_acceptance:.2f}"/>\n\n')
         
         for i, depart in enumerate(depart_times):
             path_name, edges = random.choice(paths)

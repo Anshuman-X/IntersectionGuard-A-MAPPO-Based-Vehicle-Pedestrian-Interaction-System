@@ -78,8 +78,8 @@ def main():
     
     agent_ids = env.agents
     n_agents = len(agent_ids)
-    obs_dim = 5
-    state_dim = obs_dim * n_agents  # 15
+    obs_dim = 9
+    state_dim = obs_dim * n_agents  # 27
     action_dim = 4
     
     # Initialize MAPPO and Memory

@@ -1,0 +1,11 @@
+VALIDATION REPORT
+=================
+Original pedestrian rows: 58196
+Final pedestrian rows: 58196
+Removed PET rows (< 0): 0
+Removed TTC rows (<=0 or >20 or inf): 0
+Removed duplicate/NaN rows: 0
+Final avg_pet: 2.5107
+Final avg_ttc: 6.7410
+
+READY FOR SUMO + MAPPO TRAINING

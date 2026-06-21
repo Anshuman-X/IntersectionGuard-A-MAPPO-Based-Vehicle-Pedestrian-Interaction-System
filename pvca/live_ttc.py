@@ -8,30 +8,39 @@ if "SUMO_HOME" in os.environ:
 else:
     raise Exception("SUMO_HOME not set")
 
-sumo_cmd = [
-    "sumo-gui",
-    "-c",
-    "simulation/t_intersection.sumocfg"
-]
+import argparse
 
-traci.start(sumo_cmd)
+def main():
+    parser = argparse.ArgumentParser(description="Live vehicle tracker")
+    parser.add_argument("--gui", action="store_true", help="Run with SUMO GUI")
+    args = parser.parse_args()
 
-while traci.simulation.getMinExpectedNumber() > 0:
+    sumo_binary = "sumo-gui" if args.gui else "sumo"
+    sumo_cmd = [
+        sumo_binary,
+        "-c",
+        "simulation/t_intersection.sumocfg"
+    ]
 
-    traci.simulationStep()
+    traci.start(sumo_cmd)
 
-    vehicles = traci.vehicle.getIDList()
+    while traci.simulation.getMinExpectedNumber() > 0:
+        traci.simulationStep()
+        vehicles = traci.vehicle.getIDList()
 
-    for vehicle in vehicles:
+        for vehicle in vehicles:
+            try:
+                speed = traci.vehicle.getSpeed(vehicle)
+                position = traci.vehicle.getPosition(vehicle)
+                print(
+                    f"Vehicle={vehicle} "
+                    f"Speed={speed:.2f} "
+                    f"Position={position}"
+                )
+            except traci.exceptions.TraCIException:
+                continue
 
-        speed = traci.vehicle.getSpeed(vehicle)
+    traci.close()
 
-        position = traci.vehicle.getPosition(vehicle)
-
-        print(
-            f"Vehicle={vehicle} "
-            f"Speed={speed:.2f} "
-            f"Position={position}"
-        )
-
-traci.close()
+if __name__ == "__main__":
+    main()

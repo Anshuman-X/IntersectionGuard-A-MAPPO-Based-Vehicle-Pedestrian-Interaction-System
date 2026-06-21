@@ -3,42 +3,13 @@ rl/environment.py
 =================
 Gymnasium-compatible multi-agent environment for MAPPO training at an
 unsignalized T-intersection under Indian mixed traffic conditions.
-
-Architecture
-------------
-Three cooperative agents — one per approach road:
-  - west_controller  : Controls vehicles approaching from the west
-  - east_controller  : Controls vehicles approaching from the east
-  - north_controller : Controls vehicles approaching from the north (T-branch)
-
-Each agent:
-  - OBSERVES  : A 5-feature local state vector (see state.py)
-  - ACTS      : One of 4 discrete actions (see actions.py)
-  - RECEIVES  : A shared cooperative team reward (see reward.py)
-
-MAPPO Compatibility
--------------------
-This environment follows the Gymnasium API (reset/step/close) and is directly
-compatible with the custom MAPPO trainer in mappo_trainer.py.
-
-  - observation_space : Dict of Box(5,) per agent  — for decentralised actors
-  - action_space      : Dict of Discrete(4) per agent
-
-The CENTRALISED CRITIC concatenates all agents' observations into a 15-D global
-state vector inside mappo_trainer.py — no changes needed here.
-
-Connected Modules
------------------
-  state.py        → StateExtractor      : Reads SUMO via TraCI → observation vectors
-  actions.py      → ActionExecutor      : Translates discrete actions → TraCI commands
-  reward.py       → RewardCalculator    : Computes safety/efficiency reward
-  pet_tracker.py  → LivePETTracker      : Tracks live PET per zone during training
+Optimized with cached state queries and calibrated real-world values.
 """
 
 import os
 import sys
 import numpy as np
-
+import math
 
 # Ensure SUMO tools path is set up
 if "SUMO_HOME" in os.environ:
@@ -59,8 +30,6 @@ except ImportError:
         from gym import spaces
         USING_MOCK_GYM = False
     except ImportError:
-        # Create lightweight mock representations of Gym spaces so code is runnable
-        # without external ML libraries installed on the system.
         class MockDiscrete:
             def __init__(self, n):
                 self.n = n
@@ -129,11 +98,12 @@ class IntersectionGuardEnv(gym.Env):
             agent: spaces.Discrete(4) for agent in self.agents
         }
 
-        # Observations: [vehicle_count, pedestrian_count, avg_ttc, avg_speed, conflict_count]
+        # Observations (Task 2): 9-feature local state vector
+        # [avg_speed, avg_pos, avg_direction, density, avg_waiting_time, step_pet, avg_ttc, gap_acceptance, crossing_status]
         self.observation_spaces = {
             agent: spaces.Box(
-                low=np.array([0, 0, 0, 0, 0], dtype=np.float32),
-                high=np.array([100, 100, 3, 20, 50], dtype=np.float32),
+                low=np.array([0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32),
+                high=np.array([25, 100, 360, 5, 1000, 5, 20, 10, 1], dtype=np.float32),
                 dtype=np.float32,
             )
             for agent in self.agents
@@ -147,31 +117,22 @@ class IntersectionGuardEnv(gym.Env):
         self.state_extractor   = StateExtractor()
         self.action_executor   = ActionExecutor()
         self.reward_calculator = RewardCalculator()
-        self.pet_tracker       = LivePETTracker()   # Phase A: live PET tracking
+        self.pet_tracker       = LivePETTracker()
 
         # TraCI status flag
         self.traci_started = False
 
-        # Episode-level logging (used by MAPPO trainer for metrics)
+        # Episode-level logging
         self.episode_rewards: list[float] = []
         self.episode_pet_events: int = 0
-
-    # ------------------------------------------------------------------
-    # TraCI lifecycle
-    # ------------------------------------------------------------------
 
     def start_sumo(self):
         """Start the SUMO simulation process via TraCI."""
         if not self.traci_started:
             sumo_binary = "sumo-gui" if self.use_gui else "sumo"
             sumo_cmd = [sumo_binary, "-c", self.sumocfg_path]
-            # Label connection to support multiple client bindings in RL libraries
             traci.start(sumo_cmd, label="intersection_guard")
             self.traci_started = True
-
-    # ------------------------------------------------------------------
-    # Gymnasium API
-    # ------------------------------------------------------------------
 
     def reset(self, seed=None, options=None):
         """Reset the environment state and start a new simulation episode."""
@@ -188,19 +149,23 @@ class IntersectionGuardEnv(gym.Env):
 
         self.start_sumo()
 
-        # Reset PET tracker for new episode
+        # Reset trackers
         self.pet_tracker.reset()
 
-        # Get initial observations
+        # Get initial observations with pre-populated cache
         vehicles   = traci.vehicle.getIDList()
         pedestrians = traci.person.getIDList()
+        
+        self.state_extractor.update_cache(vehicles, pedestrians)
 
         obs = {}
         for agent in self.agents:
             obs[agent] = np.array(
-                self.state_extractor.get_agent_observation(agent, vehicles, pedestrians),
+                self.state_extractor.get_agent_observation(agent, vehicles, pedestrians, step_pet=5.0),
                 dtype=np.float32
             )
+
+        self.state_extractor.clear_cache()
 
         info = {agent: {} for agent in self.agents}
         return obs, info
@@ -209,18 +174,6 @@ class IntersectionGuardEnv(gym.Env):
         """
         Execute actions for all agents, advance the simulation, and return
         new observations, rewards, terminated, truncated, and info dicts.
-
-        Parameters
-        ----------
-        actions_dict : {agent_id: action_int} — one action per agent.
-
-        Returns
-        -------
-        obs         : {agent_id: np.ndarray}  — next observations
-        rewards     : {agent_id: float}        — cooperative team reward
-        terminated  : {agent_id: bool}         — simulation finished naturally
-        truncated   : {agent_id: bool}         — max_steps reached
-        infos       : {agent_id: dict}         — diagnostic metadata
         """
         self.current_step += 1
 
@@ -228,9 +181,18 @@ class IntersectionGuardEnv(gym.Env):
         vehicles    = traci.vehicle.getIDList()
         pedestrians = traci.person.getIDList()
 
+        # Update cache for state extraction and action checks
+        self.state_extractor.update_cache(vehicles, pedestrians)
+
+        # Track vehicle speeds for emergency braking detection (Task 3)
+        prev_speeds = {}
+        for v in vehicles:
+            if v in self.state_extractor.cache["veh_speed"]:
+                prev_speeds[v] = self.state_extractor.cache["veh_speed"][v]
+
         # 1. Execute actions for each approach controller
         for agent in self.agents:
-            action     = actions_dict.get(agent, 0)   # Default to 'do nothing' if missing
+            action     = actions_dict.get(agent, 0)
             agent_vehs = self.state_extractor.get_agent_vehicles(agent, vehicles)
             agent_peds = self.state_extractor.get_agent_pedestrians(agent, pedestrians)
             self.action_executor.execute_action(agent, action, agent_vehs, agent_peds)
@@ -243,60 +205,128 @@ class IntersectionGuardEnv(gym.Env):
         next_vehicles    = traci.vehicle.getIDList()
         next_pedestrians = traci.person.getIDList()
 
-        # 3. Update PET tracker with this step's occupancy data (Phase A)
+        # Populate cache for the next state extraction
+        self.state_extractor.update_cache(next_vehicles, next_pedestrians)
+
+        # 3. Update PET tracker with this step's occupancy data
         self.pet_tracker.step(sim_time, next_vehicles, next_pedestrians)
 
-        # 4. Extract observations and compute rewards
+        # 4. Detect safety metrics (Task 3)
+        collisions = len(traci.simulation.getCollisions())
+        
+        emergency_brakes = {a: 0 for a in self.agents}
+        veh_conflicts = {a: 0 for a in self.agents}
+        ped_conflicts = {a: 0 for a in self.agents}
+
+        for agent in self.agents:
+            agent_vehs = self.state_extractor.get_agent_vehicles(agent, next_vehicles)
+            
+            # Detect emergency braking
+            for v in agent_vehs:
+                if v in prev_speeds and v in self.state_extractor.cache["veh_speed"]:
+                    decel = prev_speeds[v] - self.state_extractor.cache["veh_speed"][v]
+                    # deceleration > 4.5 m/s2 is emergency braking
+                    if decel > 4.5:
+                        emergency_brakes[agent] += 1
+            
+            # Detect vehicle-vehicle conflicts (TTC <= 3.0s)
+            for i in range(len(agent_vehs)):
+                v1 = agent_vehs[i]
+                if v1 not in self.state_extractor.cache["veh_pos"] or v1 not in self.state_extractor.cache["veh_speed"]:
+                    continue
+                pos1 = self.state_extractor.cache["veh_pos"][v1]
+                speed1 = self.state_extractor.cache["veh_speed"][v1]
+                for j in range(i + 1, len(agent_vehs)):
+                    v2 = agent_vehs[j]
+                    if v2 not in self.state_extractor.cache["veh_pos"] or v2 not in self.state_extractor.cache["veh_speed"]:
+                        continue
+                    pos2 = self.state_extractor.cache["veh_pos"][v2]
+                    dist = math.dist(pos1, pos2)
+                    rel_speed = abs(speed1 - self.state_extractor.cache["veh_speed"][v2])
+                    if dist <= 15.0 and rel_speed > 0.1:
+                        ttc = dist / rel_speed
+                        if ttc <= 3.0:
+                            veh_conflicts[agent] += 1
+
+            # Detect pedestrian-vehicle conflicts
+            agent_peds_now = self.state_extractor.get_agent_pedestrians(agent, next_pedestrians)
+            for v in agent_vehs:
+                if v not in self.state_extractor.cache["veh_pos"] or v not in self.state_extractor.cache["veh_speed"]:
+                    continue
+                v_pos = self.state_extractor.cache["veh_pos"][v]
+                v_speed = self.state_extractor.cache["veh_speed"][v]
+                for p in agent_peds_now:
+                    if p not in self.state_extractor.cache["ped_pos"]:
+                        continue
+                    p_pos = self.state_extractor.cache["ped_pos"][p]
+                    dist = math.dist(v_pos, p_pos)
+                    if dist <= 20.0 and v_speed > 0.1:
+                        ttc_vp = dist / v_speed
+                        if ttc_vp <= 3.0:
+                            ped_conflicts[agent] += 1
+
+        # 5. Extract observations and compute rewards
         obs          = {}
         local_rewards = {}
 
-        # Standard SUMO-level vehicle-to-vehicle conflicts inside the intersection
-        global_veh_conflicts = 0
-
         for agent in self.agents:
+            step_pet = self.pet_tracker.get_step_pet(agent)
+            
             obs_vector = self.state_extractor.get_agent_observation(
-                agent, next_vehicles, next_pedestrians
+                agent, next_vehicles, next_pedestrians, step_pet=step_pet
             )
             obs[agent] = np.array(obs_vector, dtype=np.float32)
 
-            # Read live PET for this agent's zone from the tracker
-            step_pet = self.pet_tracker.get_step_pet(agent)
+            agent_vehs = self.state_extractor.get_agent_vehicles(agent, next_vehicles)
+            agent_peds = self.state_extractor.get_agent_pedestrians(agent, next_pedestrians)
 
-            # Calculate local reward (now includes PET term)
+            # Calculate vehicle waiting time and unnecessary stopping (Task 3)
+            veh_waiting_time = sum(self.state_extractor.cache["veh_waiting"].get(v, 0.0) for v in agent_vehs)
+            stopped_unnecessarily = 0
+            if obs_vector[8] == 0.0:  # crossing_status is 0.0
+                stopped_unnecessarily = sum(1 for v in agent_vehs if self.state_extractor.cache["veh_speed"].get(v, 0.0) < 0.1)
+
+            # Calculate local reward
             local_rewards[agent] = self.reward_calculator.calculate_reward(
                 agent_id=agent,
                 observation=obs_vector,
-                vehicle_conflicts=global_veh_conflicts,
-                avg_pet=step_pet,
+                agent_vehicles=agent_vehs,
+                agent_pedestrians=agent_peds,
+                collisions=collisions,
+                emergency_brakes=emergency_brakes[agent],
+                vehicle_conflicts=veh_conflicts[agent],
+                veh_waiting_time=veh_waiting_time,
+                stopped_unnecessarily=stopped_unnecessarily,
             )
 
-        # 5. Formulate cooperative reward for MAPPO (average of all local rewards)
+        # Clear state extractor cache at step end
+        self.state_extractor.clear_cache()
+
+        # 6. Formulate cooperative reward for MAPPO
         team_reward = self.reward_calculator.calculate_cooperative_reward(local_rewards)
         rewards = {agent: team_reward for agent in self.agents}
 
-        # Track episode reward for logging
         self.episode_rewards.append(team_reward)
 
-        # 6. Check termination and truncation
+        # 7. Check termination and truncation
         terminated_flag = (traci.simulation.getMinExpectedNumber() <= 0)
         truncated_flag  = (self.current_step >= self.max_steps)
 
         terminated = {agent: terminated_flag for agent in self.agents}
         truncated  = {agent: truncated_flag  for agent in self.agents}
 
-        # 7. Build per-agent info dicts (diagnostic metadata for trainer logging)
-        next_obs_list = [
-            self.state_extractor.get_agent_observation(a, next_vehicles, next_pedestrians)
-            for a in self.agents
-        ]
+        # 8. Build per-agent info dicts for diagnostic logging
         infos = {
             agent: {
-                "step_conflicts": obs_v[4],
-                "avg_speed":      obs_v[3],
-                "avg_ttc":        obs_v[2],
-                "step_pet":       self.pet_tracker.get_step_pet(agent),
+                "step_conflicts": veh_conflicts[agent] + ped_conflicts[agent],
+                "ped_conflicts":  ped_conflicts[agent],
+                "veh_conflicts":  veh_conflicts[agent],
+                "avg_speed":      obs[agent][0],
+                "avg_ttc":        obs[agent][6],
+                "step_pet":       obs[agent][5],
+                "collisions":     collisions,
             }
-            for agent, obs_v in zip(self.agents, next_obs_list)
+            for agent in self.agents
         }
 
         return obs, rewards, terminated, truncated, infos
@@ -305,10 +335,7 @@ class IntersectionGuardEnv(gym.Env):
         """
         Concatenate all agent observations into a single global state vector
         for the CENTRALISED CRITIC in MAPPO.
-
-        Shape: (obs_dim × n_agents,) = (5 × 3,) = (15,)
-
-        This is called inside the MAPPO trainer — not during normal step() execution.
+        Shape: (9 × 3,) = (27,)
         """
         return np.concatenate([obs_dict[a] for a in self.agents], axis=0)
 
@@ -322,42 +349,20 @@ class IntersectionGuardEnv(gym.Env):
             self.traci_started = False
 
     def render(self):
-        # Rendering is handled by SUMO-GUI when use_gui=True.
-        # No additional rendering implementation is needed here.
         pass
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# Smoke-test: run directly with  python -m rl.environment
-# ──────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    if USING_MOCK_GYM:
-        print("Note: 'gymnasium' or 'gym' is not installed. Running in Compatibility Mock Mode.")
-    else:
-        print("Running in Native Gym/Gymnasium Mode.")
-
-    env = IntersectionGuardEnv(use_gui=False, max_steps=10)
+    env = IntersectionGuardEnv(use_gui=False, max_steps=5)
     print("Resetting RL environment...")
     obs, info = env.reset()
-
-    print(f"Step #{'0.00':>5}Initial Observations:")
     for agent, o in obs.items():
         print(f"  * {agent} : {o}")
 
-    print("\nExecuting a single random control step...")
     random_actions = {agent: env.action_spaces[agent].sample() for agent in env.agents}
-    print(f"Random Actions: {random_actions}")
-
     next_obs, rewards, terminated, truncated, infos = env.step(random_actions)
-    print("Next Step Observations:")
+    print("Next step observations:")
     for agent, o in next_obs.items():
         print(f"  * {agent} : {o}")
     print(f"Rewards: {rewards}")
-    print(f"PET Events this step: {env.pet_tracker.get_episode_pet_count()}")
-
-    # Also test global obs for MAPPO critic
-    global_obs = env.get_global_obs(next_obs)
-    print(f"Global state (for MAPPO Critic): shape={global_obs.shape}, values={global_obs}")
-
     env.close()
-    print("Environment smoke-test completed successfully!")
