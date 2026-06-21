@@ -28,7 +28,9 @@ def generate_pedestrian_demand(file_path, total_time=1000, seed=42):
                 print(f"Error reading {path}: {e}")
                 
     # Calculate calibrated number of pedestrians
-    num_pedestrians = int(crossing_rate * (total_time / 60.0))
+    pedestrian_density = 0.5
+
+    num_pedestrians = int(crossing_rate * (total_time / 60.0) * pedestrian_density)
     
     # Define pedestrian OD paths that require crossing the junction
     paths = [
